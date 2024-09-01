@@ -46,6 +46,7 @@ func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
 		_, err := os.Stat(dir + path)
+		log.Printf("%s %s\n", r.Method, path)
 		if os.IsNotExist(err) {
 			log.Fatal(fmt.Sprintf("File not found: %s", path))
 		}
