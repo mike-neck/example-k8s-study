@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: failed-pod
+  name: failed-pod
+spec:
+  containers:
+  - image: web-template-app:1.f.2
+    name: failed-pod
+    ports:
+    - containerPort: 8080
+    volumeMounts:
+      - mountPath: /shared-volume
+        name: shared-volume
+  volumes:
+    - name: shared-volume
+      emptyDir:
+        sizeLimit: 10M
+  dnsPolicy: ClusterFirst
+  restartPolicy: OnFailure

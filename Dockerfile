@@ -32,7 +32,16 @@ COPY --from=contents /work/landing     /work/doc
 COPY                 favicon.ico       /work/doc/
 COPY --from=server   /work/http-server /work/
 
+#language=bash
 ENTRYPOINT /usr/bin/bash -c \
   'env; \
+  date "+%Y%m%d%H%M%S" >> /shared-volume/items.txt; \
+  echo ""; \
+  echo "==== current-state ===="; \
+  echo "count = $(wc -l /shared-volume/items.txt)"; \
+  cat -n /shared-volume/items.txt; \
+  [[ "$(wc -l /shared-volume/items.txt | cut -d " " -f1 | tr -d " ")" -gt 3 ]] || exit 1; \
   /work/http-server \
-    -p 8080'
+    -p 8080 \
+    -d /work/doc \
+  '
