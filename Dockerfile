@@ -32,4 +32,7 @@ COPY --from=contents /work/landing     /work/doc
 COPY                 favicon.ico       /work/doc/
 COPY --from=server   /work/http-server /work/
 
-ENTRYPOINT ["/work/http-server", "-p", "8080"]
+ENTRYPOINT /usr/bin/bash -c \
+  'env; \
+  /work/http-server \
+    -p 8080'
