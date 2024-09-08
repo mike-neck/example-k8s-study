@@ -1,0 +1,26 @@
+kind: Pod
+apiVersion: v1
+metadata:
+  name: busybox
+  creationTimestamp: null
+  labels:
+    run: busybox
+spec:
+  containers:
+    - name: busy-box-1
+      image: busybox
+      command:
+        - bash
+        - -c
+        - declare cnt; for cnt in {1..6}; do echo "loop-${cnt}"; sleep 60; done
+      resources: {}
+    - name: busy-box-2
+      image: busybox
+      command:
+        - bash
+        - -c
+        - declare cnt; for cnt in {1..6}; do echo "loop-${cnt}"; sleep 60; done
+      resources: {}
+  restartPolicy: Never
+  dnsPolicy: ClusterFirst
+status: {}
