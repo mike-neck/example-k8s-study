@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: web
+  name: web
+spec:
+  containers:
+  - image: nginx:1.27
+    name: web
+    ports:
+    - containerPort: 80
+    resources:
+      limits:
+        cpu: 10m
+        memory: 32Mi
+    volumeMounts:
+      - mountPath: /usr/share/nginx/html
+        name: html-docs
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+  volumes:
+    - name: html-docs
+      emptyDir:
+        sizeLimit: 10Mi
+  initContainers:
+    - name: downloader
+      image: busybox
+      imagePullPolicy: IfNotPresent
+      volumeMounts:
+        - mountPath: /work-dir
+          name: html-docs
+      command: ["sh", "-c","wget -O /work-dir/index.html https://neverssl.com/online"]
