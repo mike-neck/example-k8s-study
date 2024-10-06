@@ -1,0 +1,15 @@
+amends "3-replicas.pkl"
+
+local nginxName = "nginx-v2"
+contents = "version-2"
+replicaCount = 1
+
+local newVersionDeployment = (deployment) {
+  metadata {
+    name = nginxName
+  }
+}
+
+output {
+  value = new Listing { newVersionDeployment }
+}

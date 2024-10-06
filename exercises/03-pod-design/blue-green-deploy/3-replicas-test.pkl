@@ -1,0 +1,42 @@
+module ReplicasTest
+
+amends "./3-replicas.pkl"
+
+import "package://pkg.pkl-lang.org/pkl-k8s/k8s@1.1.1#/api/core/v1/Pod.pkl"
+
+local targetServiceName = serviceName
+
+local testPod = new Pod {
+  metadata {
+    labels {
+      ["run"] = "busybox-test"
+    }
+    name = "busybox-test"
+  }
+  spec {
+    containers {
+      new {
+        name = "busybox-test"
+        image = "busybox"
+        command {
+          "/bin/sh"
+          "-c"
+          """
+          mkdir -p /tmp/task
+          finishFile="/tmp/task/finish"
+          while [ ! -f "${finishFile}" ]; do
+            wget -qO- \(targetServiceName)
+            sleep 10
+          done
+          """
+        }
+      }
+    }
+    restartPolicy = "Never"
+    dnsPolicy = "ClusterFirst"
+  }
+}
+
+output {
+  value = new Listing<Pod> { testPod }
+}

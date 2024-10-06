@@ -1,0 +1,108 @@
+module Replicas
+
+extends "3-outputs.pkl"
+
+import "package://pkg.pkl-lang.org/pkl-k8s/k8s@1.1.1#/K8sResource.pkl"
+import "package://pkg.pkl-lang.org/pkl-k8s/k8s@1.1.1#/api/apps/v1/Deployment.pkl"
+import "package://pkg.pkl-lang.org/pkl-k8s/k8s@1.1.1#/api/core/v1/Service.pkl"
+import "package://pkg.pkl-lang.org/pkl-k8s/k8s@1.1.1#/api/core/v1/VolumeMount.pkl"
+
+
+local typealias VolMount = Function1<String, VolumeMount>
+
+local docPathName: String = "doc-path"
+local docPath: VolMount = (path) -> new VolumeMount {
+  name = docPathName
+  mountPath = path
+}
+
+local label = nginxAppLabel
+local portNum = portNumber
+
+hidden contents: String = "version-1"
+hidden nginxName: String = "nginx"
+hidden replicaCount: Int = 3
+
+hidden deployment: Deployment = new Deployment {
+  metadata {
+    name = nginxName
+    labels = (label)
+  }
+  spec {
+    replicas = replicaCount
+    selector {
+      matchLabels = label
+    }
+    template {
+      metadata {
+        labels = label
+      }
+      spec {
+        containers {
+          new {
+            name = nginxName
+            image = "nginx:1.26-bookworm"
+            ports {
+              new {
+                containerPort = portNum
+              }
+            }
+            volumeMounts {
+              docPath.apply("/usr/share/nginx/html")
+            }
+          }
+        }
+        initContainers {
+          new {
+            name = "initializer"
+            image = "busybox"
+            volumeMounts {
+              docPath.apply("/docs")
+            }
+            command {
+              "/bin/sh"
+              "-c"
+                """
+                echo "\(contents)" > /docs/index.html
+                """
+            }
+          }
+        }
+        volumes {
+          new {
+            name = docPathName
+            emptyDir {}
+          }
+        }
+      }
+    }
+  }
+}
+
+local svcName = serviceName
+local svcLabel = servicceLabel
+
+local serice = new Service {
+  metadata {
+    name = svcName
+    labels = svcLabel
+  }
+  spec {
+    type = "ClusterIP"
+    ports {
+      new {
+        name = "http"
+        targetPort = portNum
+        port = portNum
+      }
+    }
+    selector = svcLabel
+  }
+}
+
+output {
+  value = new Listing<K8sResource> {
+    deployment
+    serice
+  }
+}
