@@ -1,0 +1,32 @@
+@ModuleInfo { minPklVersion = "0.26.0" }
+module com.example.MyMod
+
+import "package://pkg.pkl-lang.org/pkl-k8s/k8s@1.1.1#/api/batch/v1/JobSpec.pkl"
+
+hidden repeatTaskCount: Int? = 1
+hidden timeoutSeconds: Int? = 30
+
+hidden jobSpec: JobSpec = new JobSpec {
+  activeDeadlineSeconds = timeoutSeconds
+  completions = repeatTaskCount
+}
+
+local lazyRenderer: (String) -> ValueRenderer =
+  (format) -> if (format == "json") new JsonRenderer {}
+  else if (format == "yaml") new YamlRenderer { isStream = true }
+  else throw("unknown format for k8s resource: \(format), available: [json, yaml]")
+
+output {
+  local  format = read?("prop:pkl.outputFormat") ?? "yaml"
+  renderer = (lazyRenderer.apply(format)) {
+    converters {
+      [DataSize] = (size: DataSize) ->
+          let (unit = size.unit)
+            let (k8sUnit =
+              if (unit.length == 3) unit[0].toUpperCase() + unit[1]
+              else if (unit.length == 2) unit[0].toUpperCase()
+              else "")
+              "\(size.value)\(k8sUnit)"
+    }
+  }
+}

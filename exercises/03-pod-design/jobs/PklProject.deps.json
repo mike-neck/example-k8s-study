@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "resolvedDependencies": {
+    "package://pkg.pkl-lang.org/pkl-k8s/k8s@1": {
+      "type": "remote",
+      "uri": "projectpackage://pkg.pkl-lang.org/pkl-k8s/k8s@1.1.1",
+      "checksums": {
+        "sha256": "8c3d369d9533312c41b57cd2405484fc3430716a9fa1ec1caa0745f2fd876612"
+      }
+    }
+  }
+}

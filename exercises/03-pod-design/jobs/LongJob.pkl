@@ -1,0 +1,54 @@
+amends "./MyMod.pkl"
+
+import "package://pkg.pkl-lang.org/pkl-k8s/k8s@1.1.1#/api/batch/v1/Job.pkl"
+import "package://pkg.pkl-lang.org/pkl-k8s/k8s@1.1.1#/api/batch/v1/JobSpec.pkl"
+
+local jobName = "long-running-job"
+local thisJobSpec: JobSpec = jobSpec
+
+local jobLabel = new Mapping {
+  ["run"] = jobName
+}
+
+repeatTaskCount = null
+
+local job = new Job {
+  metadata {
+    labels = jobLabel
+    name = jobName
+  }
+  spec = (thisJobSpec) {
+    template {
+      metadata {
+        labels = jobLabel
+        generateName = "long-running-task-"
+      }
+      spec {
+        restartPolicy = "OnFailure"
+        containers {
+          new {
+            image = "cimg/base:2024.10"
+            name = "long-running-task"
+            command {
+              "bash"
+              "-c"
+//               language=bash
+              """
+              declare count=0
+              while [[ "${count}" -lt 30 ]]; do
+                count="$(( count + 1 ))"
+                echo "$(date '+%Y-%m-%dT%H:%M:%S') - count = ${count}"
+                sleep 5
+              done
+              """
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+output {
+  value = new Listing { job }
+}
