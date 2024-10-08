@@ -3,24 +3,34 @@ module com.example.MyMod
 
 import "package://pkg.pkl-lang.org/pkl-k8s/k8s@1.1.1#/api/batch/v1/JobSpec.pkl"
 
+hidden jobName: String = ""
 hidden repeatTaskCount: Int? = 1
 hidden timeoutSeconds: Int? = 30
+hidden waitInterval: Int = 6
 
 hidden cimgBase: String = "cimg/base:2024.10"
 
+function taskScript(): String = """
+  readonly interval="\(waitInterval)"
+
+  """ +
 // language=bash
-const taskScript = """
+  """
   declare count=0
   while [[ "${count}" -lt 10 ]]; do
     count="$(( count + 1 ))"
     echo "$(date '+%Y-%m-%dT%H:%M:%S') - count = ${count}"
-    sleep 6
+    sleep "${interval}"
   done
   """
 
-hidden jobSpec: JobSpec = new JobSpec {
+function jobSpec(): JobSpec = new JobSpec {
   activeDeadlineSeconds = timeoutSeconds
   completions = repeatTaskCount
+}
+
+function jobLabel(): Mapping<String, String> = new Mapping {
+  ["run"] = jobName
 }
 
 local lazyRenderer: (String) -> ValueRenderer =
