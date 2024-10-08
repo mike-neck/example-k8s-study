@@ -6,6 +6,9 @@ import "package://pkg.pkl-lang.org/pkl-k8s/k8s@1.1.1#/api/batch/v1/JobSpec.pkl"
 local jobName = "long-running-job"
 local thisJobSpec: JobSpec = jobSpec
 
+local imageName = cimgBase
+local task = taskScript
+
 local jobLabel = new Mapping {
   ["run"] = jobName
 }
@@ -21,26 +24,18 @@ local job = new Job {
     template {
       metadata {
         labels = jobLabel
-        generateName = "long-running-task-"
+        generateName = "\(jobName)-"
       }
       spec {
         restartPolicy = "OnFailure"
         containers {
           new {
-            image = "cimg/base:2024.10"
-            name = "long-running-task"
+            image = imageName
+            name = jobName
             command {
               "bash"
               "-c"
-//               language=bash
-              """
-              declare count=0
-              while [[ "${count}" -lt 30 ]]; do
-                count="$(( count + 1 ))"
-                echo "$(date '+%Y-%m-%dT%H:%M:%S') - count = ${count}"
-                sleep 5
-              done
-              """
+              task
             }
           }
         }

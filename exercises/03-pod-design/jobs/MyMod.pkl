@@ -6,6 +6,18 @@ import "package://pkg.pkl-lang.org/pkl-k8s/k8s@1.1.1#/api/batch/v1/JobSpec.pkl"
 hidden repeatTaskCount: Int? = 1
 hidden timeoutSeconds: Int? = 30
 
+hidden cimgBase: String = "cimg/base:2024.10"
+
+// language=bash
+const taskScript = """
+  declare count=0
+  while [[ "${count}" -lt 10 ]]; do
+    count="$(( count + 1 ))"
+    echo "$(date '+%Y-%m-%dT%H:%M:%S') - count = ${count}"
+    sleep 6
+  done
+  """
+
 hidden jobSpec: JobSpec = new JobSpec {
   activeDeadlineSeconds = timeoutSeconds
   completions = repeatTaskCount
