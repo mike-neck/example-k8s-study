@@ -3,14 +3,16 @@ amends "./MyMod.pkl"
 import "package://pkg.pkl-lang.org/pkl-k8s/k8s@1.1.1#/api/batch/v1/Job.pkl"
 import "package://pkg.pkl-lang.org/pkl-k8s/k8s@1.1.1#/api/batch/v1/JobSpec.pkl"
 
-local jobName = "long-running-job"
-local task = taskScript()
-local jobLabel = jobLabel()
+jobName = "parallel-job"
 
 local imageName = cimgBase
 
 repeatTaskCount = null
+timeoutSeconds = null
+parallelTaskCount = 5
 local thisJobSpec: JobSpec = jobSpec()
+local task = taskScript()
+local jobLabel = jobLabel()
 
 local job = new Job {
   metadata {
@@ -21,7 +23,7 @@ local job = new Job {
     template {
       metadata {
         labels = jobLabel
-        generateName = "\(jobName)-"
+        generateName = jobName + "-"
       }
       spec {
         restartPolicy = "OnFailure"
@@ -42,5 +44,5 @@ local job = new Job {
 }
 
 output {
-  value = new Listing { job }
+  value = List(job)
 }
