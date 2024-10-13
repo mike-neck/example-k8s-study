@@ -23,3 +23,5 @@ go.work.sum
 .idea/
 build/
 tmp/
+
+test-data/
