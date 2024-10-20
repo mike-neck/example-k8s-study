@@ -1,0 +1,49 @@
+module extra.PvLocal extends "./Base.pkl"
+
+import "package://pkg.pkl-lang.org/pkl-k8s/k8s@1.1.1#/api/core/v1/PersistentVolume.pkl"
+
+local objectNames: ObjectNameContainer = ObjectNames
+
+local pv = new PersistentVolume {
+  metadata {
+    name = objectNames.pvName
+    labels  = (objectNames.labels) {}
+  }
+  spec {
+    capacity {
+      ["storage"] = 3.mib
+    }
+    volumeMode = "Filesystem"
+    accessModes {
+      "ReadWriteOnce"
+    }
+    persistentVolumeReclaimPolicy = "Retain"
+    storageClassName = "local-storage"
+    `local` {
+      path = read("prop:storage-path")
+    }
+    nodeAffinity {
+      required {
+        nodeSelectorTerms {
+          new {
+            matchExpressions {
+              new {
+                key = "kubernetes.io/hostname"
+                operator = "In"
+                values {
+                  "docker-desktop"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+output {
+  value = new Listing {
+    pv
+  }
+}

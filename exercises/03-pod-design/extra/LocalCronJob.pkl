@@ -1,0 +1,73 @@
+module extra.LocalCronJob extends "./Base.pkl"
+
+import "package://pkg.pkl-lang.org/pkl-k8s/k8s@1.1.1#/api/batch/v1/CronJob.pkl"
+
+local objectNames: ObjectNameContainer = ObjectNames
+
+local cronJob = new CronJob {
+  metadata {
+    name = objectNames.cronJobName
+    labels = (objectNames.labels)
+  }
+  spec {
+    /* language=cron */
+    schedule = "*/1 * * * *"
+    jobTemplate {
+      metadata {
+        name = objectNames.cronJobName
+      }
+      spec {
+        activeDeadlineSeconds = 4
+        template {
+          metadata {
+            generateName = "\(objectNames.cronJobName)-"
+            labels = objectNames.labels
+          }
+          spec {
+            volumes {
+              new {
+                name = objectNames.pvcName
+                persistentVolumeClaim {
+                  claimName = objectNames.pvcName
+                }
+              }
+            }
+            restartPolicy = "Never"
+            containers {
+              new {
+                volumeMounts {
+                  new {
+                    name = objectNames.pvcName
+                    mountPath = "/work"
+                  }
+                }
+                image = "cimg/base:2024.10"
+                imagePullPolicy = "IfNotPresent"
+                name = objectNames.pvcName
+                command {
+                  "bash"
+                  "-c"
+                }
+                args {
+                  /* language=bash */
+                  """
+                  declare count
+                  count="$(find "/work" -type f | wc -l)"
+                  readonly now="$(date '+%Y-%m-%dT%H:%M')"
+                  printf "[%s] - %d\n" "${now}" "${count}" | tee "/work/${count}.out"
+                  sleep "${count}"
+                  echo "finish"
+                  """
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+output {
+  value = List(cronJob)
+}

@@ -1,0 +1,46 @@
+abstract module extra.Base
+
+hidden AccessMode {
+  ReadWriteOnce = "ReadWriteOnce"
+  ReadOnlyMany = "ReadOnlyMany"
+  ReadWriteMany = "ReadWriteMany"
+  ReadWriteOncePod="ReadWriteOncePod"
+}
+
+class ObjectNameContainer {
+  cronJobName: String
+  everydayJobName: String
+  pvName: String
+  pvcName: String
+  labels: Mapping<String, String>
+}
+
+hidden ObjectNames = new ObjectNameContainer {
+  cronJobName = "local-cronjob"
+  everydayJobName = "everyday-job"
+  pvName = "pv-local"
+  pvcName = "pvc-local"
+  labels {
+    ["usage"] = "local"
+  }
+}
+
+local lazyRenderer: (String) -> ValueRenderer =
+  (format) -> if (format == "json") new JsonRenderer {}
+  else if (format == "yaml") new YamlRenderer { isStream = true }
+  else throw("unknown format for k8s resource: \(format), available: [json, yaml]")
+
+output {
+  local  format = read?("prop:pkl.outputFormat") ?? "yaml"
+  renderer = (lazyRenderer.apply(format)) {
+    converters {
+      [DataSize] = (size: DataSize) ->
+          let (unit = size.unit)
+            let (k8sUnit =
+              if (unit.length == 3) unit[0].toUpperCase() + unit[1]
+              else if (unit.length == 2) unit[0].toUpperCase()
+              else "")
+              "\(size.value)\(k8sUnit)"
+    }
+  }
+}
